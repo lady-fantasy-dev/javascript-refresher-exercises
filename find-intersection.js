@@ -14,7 +14,7 @@ strArr = ["1, 3, 4, 7", "1, 2, 4, 8"];
 let arr1 = strArr[0].split(",");
 let arr2 = strArr[1].split(",");
 
-result = [];
+let result = [];
 
 arr1.forEach(num => {
   if (arr2.includes(num)){
@@ -23,4 +23,9 @@ arr1.forEach(num => {
 });
 
 
-
+// alternative soluton:
+// for (i of arr1) {
+//   if (arr2.includes(i)) {
+//     result.push(i)
+//   }
+// }
