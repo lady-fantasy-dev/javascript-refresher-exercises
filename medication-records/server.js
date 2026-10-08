@@ -1,10 +1,10 @@
 const { Pool } = require('pg');
+const cors = require('cors')
 
 const pool = new Pool({
   user: 'yasminek',
   host: 'localhost',
   database: 'medications',
-  // password: 'your_password',
   port: 5432,
 });
 
@@ -16,24 +16,19 @@ pool.query('SELECT NOW()', (err, result) => {
   }
 });
 
+const express = require('express');
+const app = express();
+const port = 3000;
+
+app.use(cors())
+const morgan = require('morgan');
+app.use(morgan('dev'));
+
 const {
   getMissedMedications,
   getMedicationByName
 } = require("./medication-records");
 
-
-const express = require('express');
-const app = express();
-const port = 3000;
-const morgan = require('morgan');
-app.use(morgan('dev'));
-
-const records = [
-  { name: "Vitamin D", date: "2026-10-01", taken: true },
-  { name: "Vitamin D", date: "2026-10-02", taken: false },
-  { name: "Iron", date: "2026-10-02", taken: true },
-  { name: "Vitamin D", date: "2026-10-03", taken: false }
-];
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
@@ -41,19 +36,42 @@ app.get('/', (req, res) => {
 
 app.get('/medications', async (req, res) => {
   try {
-    const name = req.query.name
-
     const result = await pool.query(
-      'SELECT * FROM medications WHERE name = $1',
-      [name]
+      `SELECT *
+      FROM medications
+      ORDER BY date DESC`
     );
 
     res.json(result.rows);
-
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch medications' })
   }
 });
+
+// you query by medication name
+// app.get('/medications', async (req, res) => {
+//   try {
+//     const name = req.query.name
+
+// if (name) {
+//   // filter by name
+// } else {
+//   // return everything
+// }
+
+//     const result = await pool.query(
+//       ` SELECT *
+//       FROM medications
+//       WHERE name = $1
+//       ORDER BY date DESC`,
+//       [name]
+//     );
+
+//     res.json(result.rows);
+//   } catch (error) {
+//     res.status(500).json({ message: 'Failed to fetch medications' })
+//   }
+// });
 
 app.get('/medications/missed', async (req, res) => {
   try {
@@ -77,18 +95,40 @@ app.get('/medications/missed', async (req, res) => {
 //   }
 // });
 
-
-app.get('/medications/:name', (req, res) => {
+app.get('/medications/:id', async (req, res) => {
   try {
-    const medicationName = (req.params.name)
+    const id = (req.params.id)
 
-    const medicationRecords = getMedicationByName(records, medicationName);
+    const result = await pool.query(
+      `SELECT *
+      FROM medications
+      WHERE id = $1`,
+      [id]
+    );
 
-    res.status(200).json(medicationRecords);
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Medication not found."
+      })
+    }
+
+    res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch medication name" });
+    res.status(500).json({ message: "Failed to fetch medication by ID" });
   }
 })
+
+// app.get('/medications/:name', (req, res) => {
+//   try {
+//     const medicationName = (req.params.name)
+
+//     const medicationRecords = getMedicationByName(records, medicationName);
+
+//     res.status(200).json(medicationRecords);
+//   } catch (error) {
+//     res.status(500).json({ message: "Failed to fetch medication name" });
+//   }
+// })
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

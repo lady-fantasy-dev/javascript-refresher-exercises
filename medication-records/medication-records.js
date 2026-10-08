@@ -9,7 +9,6 @@ function getMedicationByName(records, name) {
   return(medicationRecords);
 }
 
-
 module.exports = {
   getMissedMedications,
   getMedicationByName
